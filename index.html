@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Minecraft Skin Viewer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Minecraft-style font -->
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #0f0f14;
+  color: white;
+  font-family: "Press Start 2P", monospace;
+}
+
+#ui {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 280px;
+  background: #1b1b23;
+  border: 4px solid #3a3a4f;
+  padding: 16px;
+  box-shadow: 0 0 0 4px #000 inset;
+}
+
+h1 {
+  font-size: 12px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+button, input[type="file"] {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 10px;
+  background: #2d2d3d;
+  border: 3px solid #555;
+  color: white;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+}
+
+button:hover {
+  background: #3b3b52;
+}
+
+label {
+  font-size: 9px;
+}
+
+canvas {
+  display: block;
+}
+</style>
+</head>
+
+<body>
+
+<div id="ui">
+  <h1>MC Skin Viewer</h1>
+
+  <input type="file" id="skinUpload" accept="image/png">
+
+  <button id="toggleOuter">Toggle Outer Layer</button>
+  <button id="resetCam">Reset Camera</button>
+
+  <label>
+    <input type="checkbox" id="autoRotate" checked>
+    Auto Rotate
+  </label>
+</div>
+
+<canvas id="viewer"></canvas>
+
+<!-- Three.js -->
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+
+<!-- Skin renderer -->
+<script src="https://unpkg.com/skinview3d@3.0.1/bundles/skinview3d.bundle.js"></script>
+
+<script>
+const canvas = document.getElementById("viewer");
+
+const skinViewer = new skinview3d.SkinViewer({
+  canvas: canvas,
+  width: window.innerWidth,
+  height: window.innerHeight,
+  skin: null
+});
+
+skinViewer.camera.position.set(30, 15, 30);
+skinViewer.fov = 45;
+skinViewer.zoom = 0.9;
+
+skinViewer.controls.enableZoom = true;
+skinViewer.controls.enablePan = false;
+skinViewer.controls.enableRotate = true;
+
+skinViewer.animation = new skinview3d.RunningAnimation();
+skinViewer.animation.speed = 0.6;
+
+// Resize handler
+window.addEventListener("resize", () => {
+  skinViewer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Upload skin
+document.getElementById("skinUpload").addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    skinViewer.loadSkin(reader.result);
+  };
+  reader.readAsDataURL(file);
+});
+
+// Toggle outer layer
+let outerVisible = true;
+document.getElementById("toggleOuter").onclick = () => {
+  outerVisible = !outerVisible;
+  skinViewer.playerObject.skin.visible = true;
+  skinViewer.playerObject.cape.visible = false;
+
+  skinViewer.playerObject.getOuterLayer().visible = outerVisible;
+};
+
+// Reset camera
+document.getElementById("resetCam").onclick = () => {
+  skinViewer.camera.position.set(30, 15, 30);
+  skinViewer.controls.update();
+};
+
+// Auto rotate
+const autoRotateCheckbox = document.getElementById("autoRotate");
+skinViewer.controls.autoRotate = true;
+
+autoRotateCheckbox.addEventListener("change", () => {
+  skinViewer.controls.autoRotate = autoRotateCheckbox.checked;
+});
+</script>
+
+</body>
+</html>
