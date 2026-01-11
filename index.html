@@ -17,12 +17,11 @@ html, body {
   overflow: hidden;
 }
 
-/* ===== UI CARD ===== */
 #ui {
   position: absolute;
   top: 22px;
   left: 22px;
-  width: 300px;
+  width: 320px;
   padding: 18px;
   background: linear-gradient(
     180deg,
@@ -32,76 +31,69 @@ html, body {
   backdrop-filter: blur(16px);
   border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.08);
-  box-shadow:
-    0 20px 50px rgba(0,0,0,0.55),
-    inset 0 1px 0 rgba(255,255,255,0.05);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.55);
 }
 
 h1 {
   font-size: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   text-align: center;
-  letter-spacing: 1px;
-  opacity: 0.95;
 }
 
-/* ===== BUTTONS ===== */
+.section {
+  margin-bottom: 14px;
+}
+
 button {
   width: 100%;
   padding: 12px;
-  margin-bottom: 10px;
-  background: linear-gradient(180deg, #4a4a75, #303050);
+  margin-bottom: 8px;
+  background: linear-gradient(180deg, #5b5b8a, #3b3b62);
   border: none;
   border-radius: 12px;
   color: white;
   font-family: inherit;
   font-size: 10px;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
-}
-
-/* ===== FILE PICKER ===== */
-.file-wrapper {
-  margin-bottom: 12px;
-}
-
-.file-btn {
-  background: linear-gradient(180deg, #5b5b8a, #3b3b62);
-}
-
-.file-name {
-  margin-top: 6px;
+.small {
   font-size: 8px;
-  opacity: 0.7;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  padding: 8px;
 }
 
-/* hide native input */
-input[type="file"] {
-  display: none;
+input[type="text"], select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(0,0,0,0.35);
+  color: white;
+  font-family: inherit;
+  font-size: 9px;
 }
 
-/* ===== TOGGLES ===== */
 .toggle {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 9px;
-  margin-top: 8px;
-  opacity: 0.9;
+  font-size: 8px;
+  margin-top: 6px;
 }
 
 input[type="checkbox"] {
   transform: scale(1.15);
-  cursor: pointer;
+}
+
+.file-name {
+  font-size: 8px;
+  opacity: 0.7;
+  text-align: center;
+  margin-top: 4px;
+}
+
+input[type="file"] {
+  display: none;
 }
 
 canvas {
@@ -115,23 +107,45 @@ canvas {
 <div id="ui">
   <h1>MC Skin Viewer</h1>
 
-  <div class="file-wrapper">
-    <button class="file-btn" id="openFile">Choose Skin File</button>
+  <!-- FILE -->
+  <div class="section">
+    <button id="openFile">Choose Skin File</button>
     <div class="file-name" id="fileName">No file selected</div>
     <input type="file" id="skinUpload" accept="image/png">
   </div>
 
-  <button id="toggleOuter">Toggle Outer Layer</button>
-  <button id="resetCam">Reset Camera</button>
-
-  <div class="toggle">
-    <input type="checkbox" id="autoRotate" checked>
-    <label for="autoRotate">Auto Rotate</label>
+  <!-- USERNAME -->
+  <div class="section">
+    <input type="text" id="usernameInput" placeholder="Minecraft username">
+    <button class="small" id="loadUsername">Load by Username</button>
   </div>
 
-  <div class="toggle">
-    <input type="checkbox" id="toggleWalk" checked>
-    <label for="toggleWalk">Walking Animation</label>
+  <!-- LAYERS -->
+  <div class="section">
+    <div class="toggle"><input type="checkbox" id="hat" checked> Hat</div>
+    <div class="toggle"><input type="checkbox" id="jacket" checked> Jacket</div>
+    <div class="toggle"><input type="checkbox" id="sleeves" checked> Sleeves</div>
+    <div class="toggle"><input type="checkbox" id="pants" checked> Pants</div>
+  </div>
+
+  <!-- VIEW -->
+  <div class="section">
+    <div class="toggle"><input type="checkbox" id="autoRotate" checked> Auto Rotate</div>
+    <div class="toggle"><input type="checkbox" id="walk" checked> Walking</div>
+  </div>
+
+  <!-- BG -->
+  <div class="section">
+    <select id="bgSelect">
+      <option value="void">Void</option>
+      <option value="overworld">Overworld</option>
+      <option value="nether">Nether</option>
+    </select>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="section">
+    <button id="screenshot">📸 Screenshot</button>
   </div>
 </div>
 
@@ -151,71 +165,80 @@ const skinViewer = new skinview3d.SkinViewer({
   height: window.innerHeight
 });
 
-/* Camera */
 skinViewer.camera.position.set(28, 14, 28);
-skinViewer.fov = 45;
-skinViewer.zoom = 0.9;
-
-/* Controls */
-skinViewer.controls.enableZoom = true;
-skinViewer.controls.enablePan = false;
-skinViewer.controls.enableRotate = true;
 skinViewer.controls.autoRotate = true;
 
-/* Animation */
 const walkAnim = new skinview3d.WalkingAnimation();
 walkAnim.speed = 0.6;
 skinViewer.animation = walkAnim;
 
-/* Resize */
-window.addEventListener("resize", () => {
-  skinViewer.setSize(window.innerWidth, window.innerHeight);
-});
+window.addEventListener("resize", () =>
+  skinViewer.setSize(window.innerWidth, window.innerHeight)
+);
 
-/* Open file picker */
+// FILE LOAD
 document.getElementById("openFile").onclick = () => fileInput.click();
-
-/* Load skin */
-fileInput.addEventListener("change", e => {
+fileInput.onchange = e => {
   const file = e.target.files[0];
   if (!file) return;
-
   fileName.textContent = file.name;
+  const r = new FileReader();
+  r.onload = () => skinViewer.loadSkin(r.result);
+  r.readAsDataURL(file);
+};
 
-  const reader = new FileReader();
-  reader.onload = () => skinViewer.loadSkin(reader.result);
-  reader.readAsDataURL(file);
-});
+// USERNAME LOAD
+document.getElementById("loadUsername").onclick = async () => {
+  const name = document.getElementById("usernameInput").value.trim();
+  if (!name) return;
 
-/* Outer layer toggle */
-let outerEnabled = true;
-document.getElementById("toggleOuter").onclick = () => {
-  outerEnabled = !outerEnabled;
+  const uuidRes = await fetch(`https://api.mojang.com/users/profiles/minecraft/${name}`);
+  if (!uuidRes.ok) return alert("User not found");
+
+  const { id } = await uuidRes.json();
+  skinViewer.loadSkin(`https://sessionserver.mojang.com/session/minecraft/profile/${id}`);
+};
+
+// LAYERS
+function updateLayers() {
   const p = skinViewer.playerObject;
   if (!p) return;
 
-  [
-    p.head.outerLayer,
-    p.body.outerLayer,
-    p.leftArm.outerLayer,
-    p.rightArm.outerLayer,
-    p.leftLeg.outerLayer,
-    p.rightLeg.outerLayer
-  ].forEach(layer => layer.visible = outerEnabled);
+  p.head.outerLayer.visible = hat.checked;
+  p.body.outerLayer.visible = jacket.checked;
+
+  p.leftArm.outerLayer.visible =
+  p.rightArm.outerLayer.visible = sleeves.checked;
+
+  p.leftLeg.outerLayer.visible =
+  p.rightLeg.outerLayer.visible = pants.checked;
+}
+
+["hat","jacket","sleeves","pants"].forEach(id =>
+  document.getElementById(id).onchange = updateLayers
+);
+
+// VIEW
+autoRotate.onchange = e => skinViewer.controls.autoRotate = e.target.checked;
+walk.onchange = e => skinViewer.animation = e.target.checked ? walkAnim : null;
+
+// BACKGROUND
+bgSelect.onchange = e => {
+  if (e.target.value === "overworld")
+    document.body.style.background = "linear-gradient(#6ec6ff,#b9e9ff)";
+  else if (e.target.value === "nether")
+    document.body.style.background = "radial-gradient(circle,#4b0000,#120000)";
+  else
+    document.body.style.background = "radial-gradient(circle at top,#151522,#09090f)";
 };
 
-/* Reset camera */
-document.getElementById("resetCam").onclick = () => {
-  skinViewer.camera.position.set(28, 14, 28);
-  skinViewer.controls.update();
+// SCREENSHOT
+document.getElementById("screenshot").onclick = () => {
+  const link = document.createElement("a");
+  link.download = "skin.png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
 };
-
-/* Toggles */
-document.getElementById("autoRotate").onchange = e =>
-  skinViewer.controls.autoRotate = e.target.checked;
-
-document.getElementById("toggleWalk").onchange = e =>
-  skinViewer.animation = e.target.checked ? walkAnim : null;
 </script>
 
 </body>
