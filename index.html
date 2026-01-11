@@ -5,68 +5,102 @@
 <title>Minecraft Skin Viewer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Pixel font -->
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
 <style>
 html, body {
   margin: 0;
   height: 100%;
-  background: radial-gradient(circle at top, #14141f, #0b0b12);
+  background: radial-gradient(circle at top, #151522, #09090f);
   color: white;
   font-family: "Press Start 2P", monospace;
   overflow: hidden;
 }
 
+/* ===== UI CARD ===== */
 #ui {
   position: absolute;
-  top: 20px;
-  left: 20px;
+  top: 22px;
+  left: 22px;
   width: 300px;
-  padding: 16px;
-  background: rgba(30, 30, 45, 0.75);
-  backdrop-filter: blur(14px);
-  border-radius: 14px;
+  padding: 18px;
+  background: linear-gradient(
+    180deg,
+    rgba(40,40,65,0.75),
+    rgba(25,25,45,0.7)
+  );
+  backdrop-filter: blur(16px);
+  border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 10px 40px rgba(0,0,0,0.45);
+  box-shadow:
+    0 20px 50px rgba(0,0,0,0.55),
+    inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 h1 {
   font-size: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   text-align: center;
   letter-spacing: 1px;
+  opacity: 0.95;
 }
 
-button, input[type="file"] {
+/* ===== BUTTONS ===== */
+button {
   width: 100%;
   padding: 12px;
   margin-bottom: 10px;
-  background: linear-gradient(180deg, #3a3a55, #2a2a40);
+  background: linear-gradient(180deg, #4a4a75, #303050);
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   color: white;
   font-family: inherit;
   font-size: 10px;
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 button:hover {
   transform: translateY(-1px);
-  background: linear-gradient(180deg, #4a4a6b, #32324a);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
 }
 
+/* ===== FILE PICKER ===== */
+.file-wrapper {
+  margin-bottom: 12px;
+}
+
+.file-btn {
+  background: linear-gradient(180deg, #5b5b8a, #3b3b62);
+}
+
+.file-name {
+  margin-top: 6px;
+  font-size: 8px;
+  opacity: 0.7;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* hide native input */
+input[type="file"] {
+  display: none;
+}
+
+/* ===== TOGGLES ===== */
 .toggle {
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 9px;
   margin-top: 8px;
+  opacity: 0.9;
 }
 
 input[type="checkbox"] {
-  transform: scale(1.2);
+  transform: scale(1.15);
   cursor: pointer;
 }
 
@@ -81,7 +115,11 @@ canvas {
 <div id="ui">
   <h1>MC Skin Viewer</h1>
 
-  <input type="file" id="skinUpload" accept="image/png">
+  <div class="file-wrapper">
+    <button class="file-btn" id="openFile">Choose Skin File</button>
+    <div class="file-name" id="fileName">No file selected</div>
+    <input type="file" id="skinUpload" accept="image/png">
+  </div>
 
   <button id="toggleOuter">Toggle Outer Layer</button>
   <button id="resetCam">Reset Camera</button>
@@ -99,14 +137,13 @@ canvas {
 
 <canvas id="viewer"></canvas>
 
-<!-- Three.js -->
 <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
-
-<!-- SkinView3D -->
 <script src="https://unpkg.com/skinview3d@3.0.1/bundles/skinview3d.bundle.js"></script>
 
 <script>
 const canvas = document.getElementById("viewer");
+const fileInput = document.getElementById("skinUpload");
+const fileName = document.getElementById("fileName");
 
 const skinViewer = new skinview3d.SkinViewer({
   canvas,
@@ -114,38 +151,43 @@ const skinViewer = new skinview3d.SkinViewer({
   height: window.innerHeight
 });
 
-// Camera setup
+/* Camera */
 skinViewer.camera.position.set(28, 14, 28);
 skinViewer.fov = 45;
 skinViewer.zoom = 0.9;
 
-// Controls
+/* Controls */
 skinViewer.controls.enableZoom = true;
 skinViewer.controls.enablePan = false;
 skinViewer.controls.enableRotate = true;
 skinViewer.controls.autoRotate = true;
 
-// Walking animation
+/* Animation */
 const walkAnim = new skinview3d.WalkingAnimation();
 walkAnim.speed = 0.6;
 skinViewer.animation = walkAnim;
 
-// Resize handler
+/* Resize */
 window.addEventListener("resize", () => {
   skinViewer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// Upload skin
-document.getElementById("skinUpload").addEventListener("change", e => {
+/* Open file picker */
+document.getElementById("openFile").onclick = () => fileInput.click();
+
+/* Load skin */
+fileInput.addEventListener("change", e => {
   const file = e.target.files[0];
   if (!file) return;
+
+  fileName.textContent = file.name;
 
   const reader = new FileReader();
   reader.onload = () => skinViewer.loadSkin(reader.result);
   reader.readAsDataURL(file);
 });
 
-// ✅ WORKING outer layer toggle
+/* Outer layer toggle */
 let outerEnabled = true;
 document.getElementById("toggleOuter").onclick = () => {
   outerEnabled = !outerEnabled;
@@ -162,21 +204,18 @@ document.getElementById("toggleOuter").onclick = () => {
   ].forEach(layer => layer.visible = outerEnabled);
 };
 
-// Reset camera
+/* Reset camera */
 document.getElementById("resetCam").onclick = () => {
   skinViewer.camera.position.set(28, 14, 28);
   skinViewer.controls.update();
 };
 
-// Auto rotate toggle
-document.getElementById("autoRotate").addEventListener("change", e => {
+/* Toggles */
+document.getElementById("autoRotate").onchange = e =>
   skinViewer.controls.autoRotate = e.target.checked;
-});
 
-// Walking animation toggle
-document.getElementById("toggleWalk").addEventListener("change", e => {
+document.getElementById("toggleWalk").onchange = e =>
   skinViewer.animation = e.target.checked ? walkAnim : null;
-});
 </script>
 
 </body>
